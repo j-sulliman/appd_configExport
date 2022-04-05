@@ -1,16 +1,11 @@
-
-
-
-def appdLogin(url="https://apjsales2.saas.appdynamics.com//controller/auth?action=login?output=json"):
+def appdLogin(url="https://<REPLACE ME>.saas.appdynamics.com//controller/auth?action=login?output=json"):
   import requests
-
-  url = url
 
   payload={}
   headers = {
     'Content-Type': 'application/json;charset=UTF-8',
     'X-CSRF-TOKEN': '{{X-CSRF-TOKEN}}',
-    'Authorization': 'Basic <UPDATE ME>'
+    'Authorization': 'Basic <REPLACE ME>'
   }
 
   response = requests.request("GET", url, headers=headers, data=payload)
@@ -18,7 +13,7 @@ def appdLogin(url="https://apjsales2.saas.appdynamics.com//controller/auth?actio
   print(response.text)
 
 
-def getRequest(url='https://apjsales2.saas.appdynamics.com//controller/rest/applications?output=json'):
+def getRequest(url='https://<REPLACE ME>.saas.appdynamics.com//controller/rest/applications?output=json'):
   import requests
   import json
 
@@ -28,10 +23,13 @@ def getRequest(url='https://apjsales2.saas.appdynamics.com//controller/rest/appl
   headers = {
     'Content-Type': 'application/json;charset=UTF-8',
     'X-CSRF-TOKEN': '{{X-CSRF-TOKEN}}',
-    'Authorization': 'Basic <UPDATE ME>'
+    'Authorization': 'Basic <REPLACE ME>'
   }
 
   response = requests.request("GET", url, headers=headers, data=payload)
+  print("Retreving API response for {}".format(url))
+  print("Received response {}".format(response.status_code))
+
   if "output=json" in url:
     data = json.loads(response.text)
   else:
@@ -40,7 +38,7 @@ def getRequest(url='https://apjsales2.saas.appdynamics.com//controller/rest/appl
   return data
 
 
-def postRequest(postData, url='https://apjsales2.saas.appdynamics.com//controller/rest/applications?output=json'):
+def postRequest(postData, url='https://<REPLACE ME>.saas.appdynamics.com//controller/rest/applications?output=json'):
   import requests
   import json
 
@@ -49,7 +47,7 @@ def postRequest(postData, url='https://apjsales2.saas.appdynamics.com//controlle
   headers = {
     'Content-Type': 'application/json;charset=UTF-8',
     'X-CSRF-TOKEN': '{{X-CSRF-TOKEN}}',
-    'Authorization': 'Basic <UPDATE ME>'
+    'Authorization': 'Basic <REPLACE ME>'
   }
 
   response = requests.request("POST", url, headers=headers, data=postData)
@@ -61,13 +59,40 @@ def postRequest(postData, url='https://apjsales2.saas.appdynamics.com//controlle
 
   return data
 
-applications = getRequest(url ='https://vistaentertainment-non-prod.saas.appdynamics.com//controller/rest/applications?output=json')
+
+def writeConfigToFile(fileData, directoryName, filename):
+  import os
+  # Check whether the specified path exists or not
+  isExist = os.path.exists(directoryName)
+
+  if not isExist:
+    # Create a new directory because it does not exist 
+    os.makedirs(directoryName)
+
+  print("Writing {} configuration for app {} to file... ".format(directoryName, filename))
+  f = open("./{}/{}_{}.xml".format(directoryName, app["name"], filename), "w")
+  f.write(fileData)
+  f.close()
+
+
+# Get all applications
+applications = getRequest(url ='https://<REPLACE ME>.saas.appdynamics.com//controller/rest/applications?output=json')
+
 
 for app in applications:
-  transactionRules = getRequest(url="https://vistaentertainment-non-prod.saas.appdynamics.com//controller/transactiondetection/{}/custom".format(app['id']))
-  f = open("./TransactionRules/{}_TransactionDetectionRules.xml".format(app["name"]), "w")
-  f.write(transactionRules)
-  f.close()
+  print("Found {} applications, retrieving configuration...".format(len(applications)))
+  # Export transaction detection rules
+  transactionRules = getRequest(url="https://<REPLACE ME>.saas.appdynamics.com//controller/transactiondetection/{}/custom".format(app['id']))
+  writeConfigToFile(transactionRules, directoryName="TransactionRules", filename="TransactionDetectionRules")
+
+  # Export health rules
+  healthRules = getRequest(url="https://<REPLACE ME>.saas.appdynamics.com//controller/healthrules/{}".format(app['id']))
+  writeConfigToFile(healthRules, directoryName="HealthRules", filename="HealthRules")
+
+  # Export application policies
+  appPolicies = getRequest(url="https://<REPLACE ME>.saas.appdynamics.com//controller/policies/{}".format(app['id']))
+  writeConfigToFile(appPolicies, directoryName="ApplicationPolicies", filename="Policies")
+
 
 
 
@@ -86,5 +111,5 @@ for rule in dir_list:
     # Give the object representing the XML file to requests.post.
     targetApp = input("Source App [{}] | Enter Target Application name:".format(rule))
     postRequest(xml, 
-      url="https://apjsales2.saas.appdynamics.com//controller/transactiondetection/{}/custom".format(targetApp))
+      url="https://<REPLACE ME>.saas.appdynamics.com//controller/transactiondetection/{}/custom".format(targetApp))
 '''
